@@ -11,7 +11,7 @@ SAHIL KOHINKAR
 '''
 
 import ftplib           # Module to implement FTP login
-import pexpect
+import pexpect          # Module to interact with processes (for SSH login)
 import requests         # Module to send HTTP requests
 import os, sys, time    # Modules which support other small functionalities in the project
 
@@ -96,7 +96,7 @@ def sshBruteForce(IP, user, passwd):
         if(response == 0):
             print(f"[-] Error connecting!")
             return
-            
+
     # Sending the password
     child_process.sendline(passwd)
     child_process.expect(prompt, timeout=0.05)
